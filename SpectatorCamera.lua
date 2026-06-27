@@ -2,7 +2,6 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
-
 local camera = workspace.CurrentCamera
 
 local remote =
@@ -41,67 +40,62 @@ end
 -------------------------------------------------
 
 camera.CameraType = Enum.CameraType.Scriptable
-camera.CameraSubject = nil
 
 -------------------------------------------------
--- TARGET
+-- TARGETS
 -------------------------------------------------
 
+local newestTarget = nil
 local currentTarget = nil
 
-local token = 0
+-------------------------------------------------
+-- REMOTE
+-------------------------------------------------
 
 remote.OnClientEvent:Connect(function(model)
 
-	token += 1
+	newestTarget = model
+	currentTarget = model
 
-	local current = token
+end)
 
-	local humanoid =
-		model:FindFirstChildOfClass("Humanoid")
+-------------------------------------------------
+-- SPECIAL FOCUS FUNCTION
+-------------------------------------------------
 
-	if not humanoid then
+local function FocusPlayer(username)
+
+	local folder =
+		workspace:FindFirstChild(
+			"DancePlayers"
+		)
+
+	if not folder then
 		return
 	end
 
-	local connection
+	local model =
+		folder:FindFirstChild(username)
 
-	connection = humanoid.StateChanged:Connect(function(old,new)
+	if not model then
+		return
+	end
 
-		if current ~= token then
+	currentTarget = model
 
-			connection:Disconnect()
+	task.delay(5,function()
 
-			return
-
-		end
-
-		if new == Enum.HumanoidStateType.Landed
-		or new == Enum.HumanoidStateType.Running then
-
-			currentTarget = model
-
-			connection:Disconnect()
-
-		end
+		currentTarget = newestTarget
 
 	end)
 
-	task.delay(3,function()
+end
 
-		if current == token then
+-------------------------------------------------
+-- GLOBAL COMMAND
+-------------------------------------------------
 
-			currentTarget = model
-
-		end
-
-		if connection then
-			connection:Disconnect()
-		end
-
-	end)
-
-end)
+_G.FocusPlayer = FocusPlayer
 
 -------------------------------------------------
 -- CAMERA LOOP
@@ -124,14 +118,17 @@ RunService.RenderStepped:Connect(function()
 
 	local pos = hrp.Position
 
+	local sideMovement =
+		math.sin(tick() * 0.5) * 5
+
 	local desired =
 
 		CFrame.new(
-			pos + Vector3.new(0,8,14),
+			pos + Vector3.new(sideMovement,8,14),
 			pos + Vector3.new(0,3,0)
 		)
 
 	camera.CFrame =
-		camera.CFrame:Lerp(desired,0.08)
+		camera.CFrame:Lerp(desired,0.05)
 
 end)
